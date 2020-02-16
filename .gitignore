@@ -1,0 +1,32 @@
+#### STS ####
+.apt_generated
+.classpath
+.project
+.settings
+.springBeans
+
+#### IDEA ####
+.idea
+*.iws
+*.iml
+*.ipr
+
+#### NetBeans ####
+/nbprojevt/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/
+build/
+
+#### OTHER ####
+/logs/
+.DS_Store
+*.log
+logs
+*.jar
+*.war
+*.zip
+*.tar.gz
+*.rar
+*.class
+target/

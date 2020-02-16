@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/flash-framework-sentinel.iml" filepath="$PROJECT_DIR$/flash-framework-sentinel.iml" />
+      <module fileurl="file://$PROJECT_DIR$/flash-framework-sentinel-core/flash-framework-sentinel-core.iml" filepath="$PROJECT_DIR$/flash-framework-sentinel-core/flash-framework-sentinel-core.iml" />
+    </modules>
+  </component>
+</project>

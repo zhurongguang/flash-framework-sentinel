@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: sentinel-zookeeper-consumer
+## dubbo 配置
+dubbo:
+  application:
+    name: ${spring.application.name}
+    qos-enable: false
+    logger: slf4j
+  registry:
+    check: false
+    address: zookeeper://127.0.0.1:2181
+    simplified: true
+sentinel:
+#  dashboard-server: localhost:8080
+#  ## 限流规则后缀
+#  flow-rule-data-id-suffix: -flow-rules
+#  ## 单机模式
+#  mode: LOCAL
+#  remote-address: 127.0.0.1:2181
+#  datasource: ZOOKEEPER
+  enable: false

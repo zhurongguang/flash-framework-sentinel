@@ -21,7 +21,7 @@ import java.util.Optional;
  * @author zhurg
  * @date 2019/8/29 - 下午6:14
  */
-public interface DataSourceInitializer {
+public interface DataSourceInitializer extends DataIdBuilder {
 
     /**
      * 本地限流模式初始化

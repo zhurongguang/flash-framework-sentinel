@@ -5,6 +5,7 @@ import com.alibaba.nacos.api.config.ConfigService;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.flash.framework.sentinel.core.autoconfigure.SentinelConfigure;
 import com.flash.framework.sentinel.core.cluster.ClusterConfigService;
+import com.flash.framework.sentinel.core.datasource.DataIdBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -15,7 +16,7 @@ import javax.annotation.PostConstruct;
  * @date 2019/4/24 - 下午5:53
  */
 @Slf4j
-public class NacosClusterConfigService implements ClusterConfigService {
+public class NacosClusterConfigService implements ClusterConfigService, DataIdBuilder {
 
     private ConfigService configService;
 
@@ -35,9 +36,9 @@ public class NacosClusterConfigService implements ClusterConfigService {
     @Override
     public String getConfig() {
         try {
-            return configService.getConfig(sentinelConfigure.getClusterDataId(), sentinelConfigure.getGroupId(), 3000);
+            return configService.getConfig(buildDataId(sentinelConfigure.getClusterDataIdSuffix()), sentinelConfigure.getNacosGroupId(), 3000);
         } catch (Exception e) {
-            log.error("[DUBBO] Sentinel Nacos client get config failed ", e);
+            log.error("[Sentinel] Sentinel Nacos client get config failed ", e);
             return null;
         }
     }
@@ -45,9 +46,9 @@ public class NacosClusterConfigService implements ClusterConfigService {
     @Override
     public boolean publishConfig(String data) {
         try {
-            return configService.publishConfig(sentinelConfigure.getClusterDataId(), sentinelConfigure.getGroupId(), data);
+            return configService.publishConfig(buildDataId(sentinelConfigure.getClusterDataIdSuffix()), sentinelConfigure.getNacosGroupId(), data);
         } catch (Exception e) {
-            log.error("[DUBBO] Sentinel Nacos client publish config failed ", e);
+            log.error("[Sentinel] Sentinel Nacos client publish config failed ", e);
             return false;
         }
     }

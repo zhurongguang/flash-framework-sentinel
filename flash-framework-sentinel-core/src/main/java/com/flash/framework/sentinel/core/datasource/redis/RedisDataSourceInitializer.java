@@ -29,7 +29,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +37,6 @@ import java.util.Optional;
  * @author zhurg
  * @date 2019/9/2 - 下午4:49
  */
-@Component
 @ConditionalOnProperty(prefix = "sentinel", name = "datasource", havingValue = "REDIS")
 public class RedisDataSourceInitializer implements DataSourceInitializer, EnvironmentAware {
 
@@ -56,33 +54,39 @@ public class RedisDataSourceInitializer implements DataSourceInitializer, Enviro
 
     private Environment environment;
 
+    private final String redisKeyPrefix;
+
+    public RedisDataSourceInitializer(String redisKeyPrefix) {
+        this.redisKeyPrefix = redisKeyPrefix;
+    }
+
     @Override
     public void localInit(SentinelConfigure sentinelConfigure) {
         //初始化限流
-        if (StringUtils.isNotBlank(sentinelConfigure.getFlowRuleDataId())) {
-            String ruleKey = ruleKey(sentinelConfigure.getFlowRuleDataId());
-            ReadableDataSource<String, List<FlowRule>> flowRuleDataSource = new RedisDataSource<>(buildRedisConnectionConfig(), ruleKey, ruleKey,
+        if (StringUtils.isNotBlank(sentinelConfigure.getFlowRuleDataIdSuffix())) {
+            String channel = buildDataId(sentinelConfigure.getFlowRuleDataIdSuffix());
+            ReadableDataSource<String, List<FlowRule>> flowRuleDataSource = new RedisDataSource<>(buildRedisConnectionConfig(), buildKey(channel), channel,
                     (source) -> JSON.parseArray(source, FlowRule.class));
             FlowRuleManager.register2Property(flowRuleDataSource.getProperty());
         }
         //初始化熔断降级规则
-        if (StringUtils.isNotBlank(sentinelConfigure.getDegradeRuleDataId())) {
-            String ruleKey = ruleKey(sentinelConfigure.getDegradeRuleDataId());
-            ReadableDataSource<String, List<DegradeRule>> degradeRuleDataSource = new RedisDataSource<>(buildRedisConnectionConfig(), ruleKey, ruleKey,
+        if (StringUtils.isNotBlank(sentinelConfigure.getDegradeRuleDataIdSuffix())) {
+            String channel = buildDataId(sentinelConfigure.getDegradeRuleDataIdSuffix());
+            ReadableDataSource<String, List<DegradeRule>> degradeRuleDataSource = new RedisDataSource<>(buildRedisConnectionConfig(), buildKey(channel), channel,
                     (source) -> JSON.parseArray(source, DegradeRule.class));
             DegradeRuleManager.register2Property(degradeRuleDataSource.getProperty());
         }
         //初始化系统保护规则
-        if (StringUtils.isNotBlank(sentinelConfigure.getSystemRuleDataId())) {
-            String ruleKey = ruleKey(sentinelConfigure.getSystemRuleDataId());
-            ReadableDataSource<String, List<SystemRule>> systemRuleDataSource = new RedisDataSource<>(buildRedisConnectionConfig(), ruleKey, ruleKey,
+        if (StringUtils.isNotBlank(sentinelConfigure.getSystemRuleDataIdSuffix())) {
+            String channel = buildDataId(sentinelConfigure.getSystemRuleDataIdSuffix());
+            ReadableDataSource<String, List<SystemRule>> systemRuleDataSource = new RedisDataSource<>(buildRedisConnectionConfig(), buildKey(channel), channel,
                     (source) -> JSON.parseArray(source, SystemRule.class));
             SystemRuleManager.register2Property(systemRuleDataSource.getProperty());
         }
         //初始化热点数据规则
-        if (StringUtils.isNotBlank(sentinelConfigure.getParamFlowDataId())) {
-            String ruleKey = ruleKey(sentinelConfigure.getParamFlowDataId());
-            ReadableDataSource<String, List<ParamFlowRule>> paramFlowDataSource = new RedisDataSource<>(buildRedisConnectionConfig(), ruleKey, ruleKey,
+        if (StringUtils.isNotBlank(sentinelConfigure.getParamFlowDataIdSuffix())) {
+            String channel = buildDataId(sentinelConfigure.getParamFlowDataIdSuffix());
+            ReadableDataSource<String, List<ParamFlowRule>> paramFlowDataSource = new RedisDataSource<>(buildRedisConnectionConfig(), buildKey(channel), channel,
                     (source) -> JSON.parseArray(source, ParamFlowRule.class));
             ParamFlowRuleManager.register2Property(paramFlowDataSource.getProperty());
         }
@@ -102,19 +106,18 @@ public class RedisDataSourceInitializer implements DataSourceInitializer, Enviro
     @Override
     public void tokenClientInit(SentinelConfigure sentinelConfigure) {
         //通过动态数据源初始化Token Client 的 requestTimeout
-        if (StringUtils.isNotBlank(sentinelConfigure.getClusterClientConfigDataId())) {
-            String ruleKey = ruleKey(sentinelConfigure.getClusterClientConfigDataId());
-            ReadableDataSource<String, ClusterClientConfig> clusterClientConfigNacosDataSource = new RedisDataSource<>(buildRedisConnectionConfig(), ruleKey, ruleKey,
+        if (StringUtils.isNotBlank(sentinelConfigure.getClusterClientConfigDataIdSuffix())) {
+            String channel = buildDataId(sentinelConfigure.getClusterClientConfigDataIdSuffix());
+            ReadableDataSource<String, ClusterClientConfig> clusterClientConfigNacosDataSource = new RedisDataSource<>(buildRedisConnectionConfig(), buildKey(channel), channel,
                     source -> JSON.parseObject(source, ClusterClientConfig.class));
             ClusterClientConfigManager.registerClientConfigProperty(clusterClientConfigNacosDataSource.getProperty());
         } else {
             initTokenClientByLocal(sentinelConfigure);
         }
-        if (StringUtils.isNotBlank(sentinelConfigure.getClusterDataId())) {
+        if (StringUtils.isNotBlank(sentinelConfigure.getClusterDataIdSuffix())) {
             //初始化Token Client 访问 Token Server的配置
-            String ruleKey = sentinelConfigure.getClusterDataId();
-            ReadableDataSource<String, ClusterClientAssignConfig> clientAssignDs = new RedisDataSource<>(buildRedisConnectionConfig(), ruleKey,
-                    ruleKey, source -> {
+            String channel = buildDataId(sentinelConfigure.getClusterDataIdSuffix());
+            ReadableDataSource<String, ClusterClientAssignConfig> clientAssignDs = new RedisDataSource<>(buildRedisConnectionConfig(), buildKey(channel), channel, source -> {
                 List<ClusterGroup> groupList = JSON.parseArray(source, ClusterGroup.class);
                 return Optional.ofNullable(groupList)
                         .flatMap(this::extractClientAssignment)
@@ -129,28 +132,26 @@ public class RedisDataSourceInitializer implements DataSourceInitializer, Enviro
     @Override
     public void tokenServerInit(SentinelConfigure sentinelConfigure) {
         //Token Server端注册限流动态数据源
-        if (StringUtils.isNotBlank(sentinelConfigure.getFlowRuleDataId())) {
+        if (StringUtils.isNotBlank(sentinelConfigure.getFlowRuleDataIdSuffix())) {
             ClusterFlowRuleManager.setPropertySupplier(namespace -> {
-                String ruleKey = String.format("%s:%s", namespace, sentinelConfigure.getFlowRuleDataId());
-                ReadableDataSource<String, List<FlowRule>> ds = new RedisDataSource<>(buildRedisConnectionConfig(), ruleKey, ruleKey,
+                String channel = buildDataId(sentinelConfigure.getFlowRuleDataIdSuffix());
+                ReadableDataSource<String, List<FlowRule>> ds = new RedisDataSource<>(buildRedisConnectionConfig(), buildKey(channel), channel,
                         source -> JSON.parseArray(source, FlowRule.class));
                 return ds.getProperty();
             });
         }
         //Token Server端注册群热点数据动态数据源
-        if (StringUtils.isNotBlank(sentinelConfigure.getParamFlowDataId())) {
+        if (StringUtils.isNotBlank(sentinelConfigure.getParamFlowDataIdSuffix())) {
             ClusterParamFlowRuleManager.setPropertySupplier(namespace -> {
-                String ruleKey = String.format("%s:%s", namespace, sentinelConfigure.getParamFlowDataId());
-                ReadableDataSource<String, List<ParamFlowRule>> ds = new RedisDataSource<>(buildRedisConnectionConfig(), ruleKey,
-                        ruleKey, source -> JSON.parseArray(source, ParamFlowRule.class));
+                String channel = buildDataId(sentinelConfigure.getParamFlowDataIdSuffix());
+                ReadableDataSource<String, List<ParamFlowRule>> ds = new RedisDataSource<>(buildRedisConnectionConfig(), buildKey(channel), channel, source -> JSON.parseArray(source, ParamFlowRule.class));
                 return ds.getProperty();
             });
         }
-        if (StringUtils.isNotBlank(sentinelConfigure.getClusterDataId())) {
+        if (StringUtils.isNotBlank(sentinelConfigure.getClusterDataIdSuffix())) {
             //初始化token server 的 ServerTransportConfig
-            String ruleKey = sentinelConfigure.getClusterDataId();
-            ReadableDataSource<String, ServerTransportConfig> serverTransportDs = new RedisDataSource<>(buildRedisConnectionConfig(), ruleKey,
-                    ruleKey, source -> {
+            String channel = buildDataId(sentinelConfigure.getClusterDataIdSuffix());
+            ReadableDataSource<String, ServerTransportConfig> serverTransportDs = new RedisDataSource<>(buildRedisConnectionConfig(), buildKey(channel), channel, source -> {
                 List<ClusterGroup> groupList = JSON.parseArray(source, ClusterGroup.class);
                 return Optional.ofNullable(groupList)
                         .flatMap(this::extractServerTransportConfig)
@@ -164,11 +165,10 @@ public class RedisDataSourceInitializer implements DataSourceInitializer, Enviro
 
     @Override
     public void commonInit(SentinelConfigure sentinelConfigure) {
-        if (StringUtils.isNotBlank(sentinelConfigure.getClusterDataId())) {
-            String ruleKey = sentinelConfigure.getClusterDataId();
+        if (StringUtils.isNotBlank(sentinelConfigure.getClusterDataIdSuffix())) {
+            String channel = buildDataId(sentinelConfigure.getClusterDataIdSuffix());
             //初始化当前节点的状态
-            ReadableDataSource<String, Integer> clusterModeDs = new RedisDataSource<>(buildRedisConnectionConfig(), ruleKey,
-                    ruleKey, source -> {
+            ReadableDataSource<String, Integer> clusterModeDs = new RedisDataSource<>(buildRedisConnectionConfig(), buildKey(channel), channel, source -> {
                 List<ClusterGroup> groupList = JSON.parseArray(source, ClusterGroup.class);
                 return Optional.ofNullable(groupList)
                         .map(this::extractMode)
@@ -188,8 +188,10 @@ public class RedisDataSourceInitializer implements DataSourceInitializer, Enviro
             String nodes = environment.getProperty(SPRING_REDIS_SENTINEL_NODES);
             RedisConnectionConfig.Builder builder = RedisConnectionConfig.builder();
             builder.withSentinelMasterId(sentinelMasterId)
-                    .withDatabase(database)
-                    .withPassword(password);
+                    .withDatabase(database);
+            if (StringUtils.isNotBlank(password)) {
+                builder.withPassword(password);
+            }
             List<String> hosts = Splitter.on(",").splitToList(nodes);
             for (String host : hosts) {
                 String[] hp = host.split(":");
@@ -201,12 +203,12 @@ public class RedisDataSourceInitializer implements DataSourceInitializer, Enviro
             Integer port = environment.getProperty(SPRING_REDIS_PORT, Integer.class);
             Integer database = environment.getProperty(SPRING_REDIS_DATABASE, Integer.class);
             String password = environment.getProperty(SPRING_REDIS_PASSWORD);
-            return RedisConnectionConfig.builder()
-                    .withHost(host)
-                    .withPort(port)
-                    .withPassword(password)
-                    .withDatabase(database)
-                    .build();
+            RedisConnectionConfig.Builder builder = RedisConnectionConfig.builder();
+            builder.withHost(host).withPort(port).withDatabase(database);
+            if (StringUtils.isNotBlank(password)) {
+                builder.withPassword(password);
+            }
+            return builder.build();
         }
     }
 
@@ -215,7 +217,13 @@ public class RedisDataSourceInitializer implements DataSourceInitializer, Enviro
         this.environment = environment;
     }
 
-    protected String ruleKey(String dataId) {
-        return String.format("%s:%s", AppNameUtil.getAppName(), dataId);
+    /**
+     * 构建缓存存储的key
+     *
+     * @param dataId
+     * @return
+     */
+    private String buildKey(String dataId) {
+        return String.format("%s:%s:%s", redisKeyPrefix, AppNameUtil.getAppName(), dataId);
     }
 }

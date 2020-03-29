@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: sentinel-zookeeper-provider
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    lettuce:
+      pool:
+        max-active: 10
+        min-idle: 5
+## dubbo 配置
+dubbo:
+  application:
+    name: ${spring.application.name}
+    qos-enable: false
+    logger: slf4j
+  scan:
+    base-packages: com.flash.framework.sentinel.demo.api.impl
+  protocol:
+    name: dubbo
+    port: 20880
+  registry:
+    check: false
+    address: zookeeper://127.0.0.1:2181
+    simplified: true
+  metadata-report:
+    address: zookeeper://127.0.0.1:2181
+  config-center:
+    address: zookeeper://127.0.0.1:2181
+sentinel:
+  dashboard-server: localhost:8080
+  ## 限流规则后缀
+  flow-rule-data-id-suffix: -flow-rules
+  ## 单机模式
+  mode: LOCAL
+  remote-address: 127.0.0.1:6379
+  datasource: REDIS
+  redis-key-prefix: sentinel-rules
+

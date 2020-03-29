@@ -69,7 +69,7 @@ public class SentinelInitializer {
             Assert.notNull(sentinelConfigure.getRemoteAddress(), "[Sentinel] Sentinel property sentinel.remote-address can not be null");
         }
         if (SentinelDataSourceType.NACOS.equals(sentinelConfigure.getDataSource())) {
-            Assert.notNull(sentinelConfigure.getGroupId(), "[Sentinel] Sentinel property sentinel.group-id can not be null");
+            Assert.notNull(sentinelConfigure.getNacosGroupId(), "[Sentinel] Sentinel property sentinel.group-id can not be null");
         }
         if (SentinelDataSourceType.APOLLO.equals(sentinelConfigure.getDataSource())) {
             Assert.notNull(sentinelConfigure.getApolloNamespace(), "[Sentinel] Sentinel property sentinel.apollo-namespace can not be null");

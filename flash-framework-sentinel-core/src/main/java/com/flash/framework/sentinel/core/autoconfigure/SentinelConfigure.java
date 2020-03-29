@@ -15,7 +15,7 @@ public class SentinelConfigure {
     /**
      * 是否启用
      */
-    private boolean enable;
+    private boolean enable = true;
 
     /**
      * Sentinel Dashboard 地址
@@ -25,7 +25,7 @@ public class SentinelConfigure {
     /**
      * TokenClient port
      */
-    private int tokenClientPort = 8720;
+    private int tokenClientPort = 8719;
 
     /**
      * TokenServer port
@@ -33,39 +33,39 @@ public class SentinelConfigure {
     private int tokenServerPort = 18730;
 
     /**
-     * 配置中心groupId
+     * 配置中心groupId,Nacos使用
      */
-    private String groupId;
+    private String nacosGroupId;
 
     /**
-     * 配置中心Sentinel限流规则dataId
+     * 配置中心Sentinel限流规则dataId后缀
      */
-    private String flowRuleDataId;
+    private String flowRuleDataIdSuffix;
 
     /**
-     * 配置中心Sentinel降级规则dataId
+     * 配置中心Sentinel降级规则dataId后缀
      */
-    private String degradeRuleDataId;
+    private String degradeRuleDataIdSuffix;
 
     /**
-     * 配置中心Sentinel系统保护规则dataId
+     * 配置中心Sentinel系统保护规则dataId后缀
      */
-    private String systemRuleDataId;
+    private String systemRuleDataIdSuffix;
 
     /**
-     * 配置中心Sentinel热点数据规则dataId
+     * 配置中心Sentinel热点数据规则dataId后缀
      */
-    private String paramFlowDataId;
+    private String paramFlowDataIdSuffix;
 
     /**
-     * 配置中心Sentinel tokenClient节点集群配置 dataId
+     * 配置中心Sentinel tokenClient节点集群配置 dataId后缀
      */
-    private String clusterClientConfigDataId;
+    private String clusterClientConfigDataIdSuffix;
 
     /**
-     * 配置中心Sentinel token server/token client集群配置dataId
+     * 配置中心Sentinel token server/token client集群配置dataId后缀
      */
-    private String clusterDataId;
+    private String clusterDataIdSuffix;
 
     /**
      * 配置中心地址
@@ -76,6 +76,16 @@ public class SentinelConfigure {
      * apollo namespaceName
      */
     private String apolloNamespace;
+
+    /**
+     * zookeeper path
+     */
+    private String zookeeperPath = "sentinel-rules";
+
+    /**
+     * redis key 前缀
+     */
+    private String redisKeyPrefix = "sentinel-rules";
 
     /**
      * 配置中心类型
@@ -97,5 +107,4 @@ public class SentinelConfigure {
      */
     @NestedConfigurationProperty
     private SentinelClusterConfigure cluster;
-
 }

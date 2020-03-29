@@ -9,6 +9,8 @@
     <version>1.0.0.RELEASE</version>
     <modules>
         <module>flash-framework-sentinel-core</module>
+        <module>flash-framework-sentinel-demo</module>
+        <module>flash-framework-sentinel-adapter</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -23,6 +25,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
+        <flash-framework.version>1.0.0</flash-framework.version>
         <flash-framework-zookeeper.version>1.0.0.RELEASE</flash-framework-zookeeper.version>
     </properties>
 
@@ -31,15 +34,9 @@
             <dependency>
                 <groupId>com.flash.framework</groupId>
                 <artifactId>flash-framework-dependencies</artifactId>
-                <version>1.0.0</version>
+                <version>${flash-framework.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>com.flash.framework</groupId>
-                <artifactId>flash-framework-zookeeper</artifactId>
-                <version>${flash-framework-zookeeper.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
